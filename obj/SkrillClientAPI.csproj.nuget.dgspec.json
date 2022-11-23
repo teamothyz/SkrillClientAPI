@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Tuan\\source\\repos\\SkrillClientAPI\\SkrillClientAPI.csproj": {}
+    "C:\\Users\\Tuan\\Downloads\\SkrillClientAPI\\SkrillClientAPI.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Tuan\\source\\repos\\SkrillClientAPI\\SkrillClientAPI.csproj": {
+    "C:\\Users\\Tuan\\Downloads\\SkrillClientAPI\\SkrillClientAPI.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Tuan\\source\\repos\\SkrillClientAPI\\SkrillClientAPI.csproj",
+        "projectUniqueName": "C:\\Users\\Tuan\\Downloads\\SkrillClientAPI\\SkrillClientAPI.csproj",
         "projectName": "SkrillClientAPI",
-        "projectPath": "C:\\Users\\Tuan\\source\\repos\\SkrillClientAPI\\SkrillClientAPI.csproj",
+        "projectPath": "C:\\Users\\Tuan\\Downloads\\SkrillClientAPI\\SkrillClientAPI.csproj",
         "packagesPath": "C:\\Users\\Tuan\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Tuan\\source\\repos\\SkrillClientAPI\\obj\\",
+        "outputPath": "C:\\Users\\Tuan\\Downloads\\SkrillClientAPI\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Tuan\\AppData\\Roaming\\NuGet\\NuGet.Config",

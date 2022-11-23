@@ -11,13 +11,12 @@ builder.Services.AddTransient<SkrillAPIService, SkrillAPIService>();
 builder.Services.AddSingleton<ClientRequest, ClientRequest>();
 
 var app = builder.Build();
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
 
-app.UseHttpsRedirection();
+#if DEBUG
+app.UseSwagger();
+app.UseSwaggerUI();
+#endif
+
 app.UseAuthorization();
 app.MapControllers();
 app.Run();

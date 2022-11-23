@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "PmD67Z3P971wCjAQ26XaZuVRwRLmauF9G628aLWQ1PP0WfWO4H9IUrvqxEzOTvjpizTZbbUrrHSVFfnA8p8c8g==",
+  "dgSpecHash": "F6myRxwxP3d/FI/igmXvmmPifT5Z4u7DG+cwU4aR/wgAXDSnZHXUAVatVhX00otoc0PDhM5eJdICN/v2myWPXg==",
   "success": true,
-  "projectFilePath": "C:\\Users\\Tuan\\source\\repos\\SkrillClientAPI\\SkrillClientAPI.csproj",
+  "projectFilePath": "C:\\Users\\Tuan\\Downloads\\SkrillClientAPI\\SkrillClientAPI.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Tuan\\.nuget\\packages\\microsoft.extensions.apidescription.server\\3.0.0\\microsoft.extensions.apidescription.server.3.0.0.nupkg.sha512",
     "C:\\Users\\Tuan\\.nuget\\packages\\microsoft.openapi\\1.2.3\\microsoft.openapi.1.2.3.nupkg.sha512",

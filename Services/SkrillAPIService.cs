@@ -182,5 +182,14 @@ namespace SkrillClientAPI.Services
             var responseContent = await response.Content.ReadAsStringAsync();
             return responseContent;
         }
+
+        public async Task<string> Logout()
+        {
+            clientRequest.SetHeader();
+            var url = $"https://account.skrill.com/api/logout/v2/logouts";
+            var response = await clientRequest.Client.PostAsync(url, null);
+            var responseContent = await response.Content.ReadAsStringAsync();
+            return responseContent;
+        }
     }
 }
