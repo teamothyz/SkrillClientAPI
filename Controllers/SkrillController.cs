@@ -18,29 +18,19 @@ namespace SkrillClientAPI.Controllers
         }
 
         /// <summary>
-        /// Using to re-login when session is expired
-        /// </summary>
-        /// <param name="user"></param>
-        /// <returns></returns>
-        [HttpPost("login")]
-        public async Task<ActionResult<string>> LoginWithoutOTP([FromBody] UserModel user)
-        {
-            await apiService.RegisterSkrillSession();
-            await apiService.AuthorizeSkrillSession();
-            return await apiService.Login(user, false);
-        }
-
-        /// <summary>
         /// Using for the first time login to request OTP
         /// </summary>
         /// <param name="user"></param>
         /// <returns></returns>
         [HttpPost("login/requestotp")]
-        public async Task<ActionResult<string>> LoginWithOTP([FromBody] UserModel user)
+        public async Task<ActionResult<string>> RequestOTP([FromBody] UserModel user)
         {
+            bool isNewSession = true;
+            await apiService.AuthorizeSkrillSession(isNewSession);
             await apiService.RegisterSkrillSession();
             await apiService.AuthorizeSkrillSession();
-            return await apiService.Login(user, true);
+            await apiService.Login(user);
+            return await apiService.RequestOTP();
         }
 
         /// <summary>
@@ -105,6 +95,10 @@ namespace SkrillClientAPI.Controllers
             return await apiService.CheckMoneyRequest(currency, fromdate, todate, page, pagesize);
         }
 
+        /// <summary>
+        /// Logout
+        /// </summary>
+        /// <returns></returns>
         [HttpPost("logout")]
         public async Task<ActionResult<string>> Logout()
         {

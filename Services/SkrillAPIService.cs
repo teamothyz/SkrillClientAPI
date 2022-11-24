@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using SkrillClientAPI.Controllers.Models;
 using SkrillClientAPI.Services.Models;
+using System;
 using System.Globalization;
 using System.Net;
 using System.Text;
@@ -16,26 +17,22 @@ namespace SkrillClientAPI.Services
             this.clientRequest = client;
         }
 
-        public async Task<HttpStatusCode> RegisterSkrillSession()
+        public async Task RegisterSkrillSession()
         {
+            clientRequest.SetHeader();
             var url = "https://account.skrill.com/api/login/session-register";
             var query = "redirect_uri=https://account.skrill.com/wallet/account/assets/html/auth.html";
-            var response = await clientRequest.Client.GetAsync($"{url}?{query}");
-            return response.StatusCode;
+            await clientRequest.Client.GetAsync($"{url}?{query}");
         }
 
-        public async Task<HttpStatusCode> AuthorizeSkrillSession()
+        public async Task AuthorizeSkrillSession(bool isNewSession = false)
         {
-            clientRequest.Client.DefaultRequestHeaders.Clear();
-            var cookies = clientRequest.Cookies.GetCookies(clientRequest.Uri);
-            var cookiesToString = cookies.Select(item => $"{item.Name}={item.Value}").ToList();
-            clientRequest.Client.DefaultRequestHeaders.Add("cookie", String.Join(";", cookiesToString));
+            clientRequest.SetHeader(isNewSession);
             var url = "https://account.skrill.com/api/login/authorize";
-            var response = await clientRequest.Client.GetAsync(url);
-            return response.StatusCode;
+            await clientRequest.Client.GetAsync(url);
         }
 
-        public async Task<string> Login(UserModel user, bool requireOTP = false)
+        public async Task<string> Login(UserModel user)
         {
             var captchaCode = await CaptchaService.ResolveCaptcha(clientRequest);
             clientRequest.CaptchaResolvedCode = captchaCode;
@@ -43,21 +40,23 @@ namespace SkrillClientAPI.Services
 
             clientRequest.SetHeader();
 
-            var captchaValidationRequest = new CaptchaValidationRequest();
-            captchaValidationRequest.response = clientRequest.CaptchaResolvedCode;
-            captchaValidationRequest.siteKey = clientRequest.SiteKey;
+            var captchaValidationRequest = new CaptchaValidationRequest
+            {
+                response = clientRequest.CaptchaResolvedCode,
+                siteKey = clientRequest.SiteKey
+            };
 
-            var loginModel = new LoginModel();
-            loginModel.captchaValidationRequest = captchaValidationRequest;
-            loginModel.username = clientRequest.User.Username;
-            loginModel.password = clientRequest.User.Password;
+            var loginModel = new LoginModel
+            {
+                captchaValidationRequest = captchaValidationRequest,
+                username = clientRequest.User.Username,
+                password = clientRequest.User.Password
+            };
 
             var valuesJson = JsonConvert.SerializeObject(loginModel);
             var content = new StringContent(valuesJson, Encoding.UTF8, "application/json");
             var url = "https://account.skrill.com/api/login";
             var response = await clientRequest.Client.PostAsync(url, content);
-            if (!requireOTP)
-                return await response.Content.ReadAsStringAsync();
 
             var responseString = await response.Content.ReadAsStringAsync();
             dynamic responseObject = JsonConvert.DeserializeObject(responseString);
@@ -76,13 +75,13 @@ namespace SkrillClientAPI.Services
                 clientRequest.EventId = item2.Split('=')[1];
                 clientRequest.ClientEventId = item1.Split('=')[1];
             }
-            return await RequestOTP();
+            return responseString;
         }
 
         public async Task<string> RequestOTP()
         {
             clientRequest.SetHeader();
-            Dictionary<string, string> values = new Dictionary<string, string>()
+            Dictionary<string, string> values = new()
             {
                 {"eventId", clientRequest.EventId},
                 {"clientEventId", clientRequest.ClientEventId }
@@ -97,7 +96,7 @@ namespace SkrillClientAPI.Services
         public async Task<string> SubmitOTPToLogin(string otp)
         {
             clientRequest.SetHeader();
-            Dictionary<string, string?> values = new Dictionary<string, string?>()
+            Dictionary<string, string?> values = new()
             {
                 {"clientEventId", clientRequest.ClientEventId },
                 {"eventId", clientRequest.EventId },
@@ -117,16 +116,20 @@ namespace SkrillClientAPI.Services
         {
             clientRequest.SetHeader();
 
-            var captchaValidationRequest = new CaptchaValidationRequest();
-            captchaValidationRequest.response = clientRequest.CaptchaResolvedCode;
-            captchaValidationRequest.siteKey = clientRequest.SiteKey;
+            var captchaValidationRequest = new CaptchaValidationRequest
+            {
+                response = clientRequest.CaptchaResolvedCode,
+                siteKey = clientRequest.SiteKey
+            };
 
-            var loginWithOTPModel = new LoginWithOTPModel();
-            loginWithOTPModel.captchaValidationRequest = captchaValidationRequest;
-            loginWithOTPModel.username = clientRequest.User.Username;
-            loginWithOTPModel.password = clientRequest.User.Password;
-            loginWithOTPModel.scaEventId = clientRequest.EventId;
-            loginWithOTPModel.scaClientEventId = clientRequest.ClientEventId;
+            var loginWithOTPModel = new LoginWithOTPModel
+            {
+                captchaValidationRequest = captchaValidationRequest,
+                username = clientRequest.User.Username,
+                password = clientRequest.User.Password,
+                scaEventId = clientRequest.EventId,
+                scaClientEventId = clientRequest.ClientEventId
+            };
 
             var valuesJson = JsonConvert.SerializeObject(loginWithOTPModel);
             var content = new StringContent(valuesJson, Encoding.UTF8, "application/json");

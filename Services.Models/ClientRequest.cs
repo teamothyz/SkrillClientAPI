@@ -25,7 +25,6 @@ namespace SkrillClientAPI.Services.Models
             Handler = new HttpClientHandler();
             Handler.CookieContainer = Cookies;
             Client = new HttpClient(Handler);
-            SessionKey = Guid.NewGuid();
             InstanceId = Guid.NewGuid();
             using (var reader = new StreamReader("appsettings.json"))
             {
@@ -39,18 +38,19 @@ namespace SkrillClientAPI.Services.Models
             }
         }
 
-        public void SetHeader()
+        public void SetHeader(bool isNewSession = false)
         {
+            if (isNewSession)
+                SessionKey = Guid.NewGuid();
+
             var cookies = Cookies.GetCookies(Uri);
-            var cookiesToString = cookies.Select(item => $"{item.Name}={item.Value}").ToList();
             var token = cookies.FirstOrDefault(item => item.Name.ToUpper().Equals("XSRF-TOKEN"))?.Value;
 
             Client.DefaultRequestHeaders.Clear();
             Client.DefaultRequestHeaders.Add("x-xsrf-token", token);
             Client.DefaultRequestHeaders.Add("x-tmx-session-id", SessionKey.ToString());
-            Client.DefaultRequestHeaders.Add("cookie", string.Join(";", cookiesToString));
-            Client.DefaultRequestHeaders.Add("clientRequest-instance-id", InstanceId.ToString());
-            Client.DefaultRequestHeaders.Add("clientRequest-app-version", "Web-7.2.47");
+            Client.DefaultRequestHeaders.Add("client-instance-id", InstanceId.ToString());
+            Client.DefaultRequestHeaders.Add("client-app-version", "Web-7.2.47");
         }
     }
 }
