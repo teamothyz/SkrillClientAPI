@@ -4,5 +4,6 @@
     {
         public string id { get; set; }
         public string key { get; set; }
+        public string requestlink { get; set; }
     }
 }

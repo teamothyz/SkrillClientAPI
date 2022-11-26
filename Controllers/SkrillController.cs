@@ -26,9 +26,8 @@ namespace SkrillClientAPI.Controllers
         public async Task<ActionResult<string>> RequestOTP([FromBody] UserModel user)
         {
             bool isNewSession = true;
-            await apiService.AuthorizeSkrillSession(isNewSession);
             await apiService.RegisterSkrillSession();
-            await apiService.AuthorizeSkrillSession();
+            await apiService.AuthorizeSkrillSession(isNewSession);
             await apiService.Login(user);
             return await apiService.RequestOTP();
         }
@@ -41,7 +40,14 @@ namespace SkrillClientAPI.Controllers
         [HttpPost("login/submitotp")]
         public async Task<ActionResult<string>> SubmitOTP([FromBody] string otp)
         {
-            return await apiService.SubmitOTPToLogin(otp);
+            await apiService.SubmitOTPToLogin(otp);
+            var result = await apiService.LoginAfterSubmitOTP();
+
+            //DO this every 10 mins to keep logged in
+            if (apiService.clientRequest.IsLoggedIn)
+                apiService.KeepSessionAlive();
+
+            return result;
         }
 
         /// <summary>

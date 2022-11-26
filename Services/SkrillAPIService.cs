@@ -10,7 +10,7 @@ namespace SkrillClientAPI.Services
 {
     public class SkrillAPIService
     {
-        ClientRequest clientRequest;
+        public ClientRequest clientRequest;
 
         public SkrillAPIService(ClientRequest client)
         {
@@ -25,11 +25,37 @@ namespace SkrillClientAPI.Services
             await clientRequest.Client.GetAsync($"{url}?{query}");
         }
 
-        public async Task AuthorizeSkrillSession(bool isNewSession = false)
+        public async Task<string> AuthorizeSkrillSession(bool isNewSession = false)
         {
             clientRequest.SetHeader(isNewSession);
             var url = "https://account.skrill.com/api/login/authorize";
-            await clientRequest.Client.GetAsync(url);
+            var response = await clientRequest.Client.GetAsync(url);
+            return await response.Content.ReadAsStringAsync();
+        }
+
+        //Task to keep logged-in session
+        public async Task KeepSessionAlive()
+        {
+            while (clientRequest.IsLoggedIn)
+            {
+                try
+                {
+                    var authTask = AuthorizeSkrillSession();
+                    var response = authTask.Result;
+                    dynamic responseObject = JsonConvert.DeserializeObject(response);
+                    string status = responseObject.status.ToString();
+                    if (status == null || !status.ToUpper().Equals("LOGGED_IN"))
+                        throw new Exception();
+                }
+                catch (Exception)
+                {
+                    clientRequest.IsLoggedIn = false;
+                    break;
+                }
+                var delayTask = Task.Delay(5 * 60 * 1000);
+                await delayTask.ConfigureAwait(false);
+                delayTask.Dispose();
+            }
         }
 
         public async Task<string> Login(UserModel user)
@@ -56,25 +82,31 @@ namespace SkrillClientAPI.Services
             var valuesJson = JsonConvert.SerializeObject(loginModel);
             var content = new StringContent(valuesJson, Encoding.UTF8, "application/json");
             var url = "https://account.skrill.com/api/login";
-            var response = await clientRequest.Client.PostAsync(url, content);
 
+            var response = await clientRequest.Client.PostAsync(url, content);
             var responseString = await response.Content.ReadAsStringAsync();
             dynamic responseObject = JsonConvert.DeserializeObject(responseString);
-            string links = responseObject.links[0].href;
-            var data = links.Split('?')[1];
-            var item1 = data.Split('&')[0];
-            var item2 = data.Split('&')[1];
+            try
+            {
+                string links = responseObject.links[0].href;
+                var data = links.Split('?')[1];
+                var item1 = data.Split('&')[0];
+                var item2 = data.Split('&')[1];
 
-            if (item1.ToLower().Contains("eventid"))
-            {
-                clientRequest.EventId = item1.Split('=')[1];
-                clientRequest.ClientEventId = item2.Split('=')[1];
+                if (item1.ToLower().Contains("eventid"))
+                {
+                    clientRequest.EventId = item1.Split('=')[1];
+                    clientRequest.ClientEventId = item2.Split('=')[1];
+                }
+                else
+                {
+                    clientRequest.EventId = item2.Split('=')[1];
+                    clientRequest.ClientEventId = item1.Split('=')[1];
+                }
             }
-            else
-            {
-                clientRequest.EventId = item2.Split('=')[1];
-                clientRequest.ClientEventId = item1.Split('=')[1];
-            }
+            catch (Exception)
+            { }
+
             return responseString;
         }
 
@@ -108,8 +140,8 @@ namespace SkrillClientAPI.Services
             var valuesJson = JsonConvert.SerializeObject(values);
             var content = new StringContent(valuesJson, Encoding.UTF8, "application/json");
             var url = "https://account.skrill.com/api/2fa/v1/otp-verify";
-            await clientRequest.Client.PostAsync(url, content);
-            return await LoginAfterSubmitOTP();
+            var result = await clientRequest.Client.PostAsync(url, content);
+            return await result.Content.ReadAsStringAsync();
         }
 
         public async Task<string> LoginAfterSubmitOTP()
@@ -135,7 +167,17 @@ namespace SkrillClientAPI.Services
             var content = new StringContent(valuesJson, Encoding.UTF8, "application/json");
             var url = "https://account.skrill.com/api/login";
             var response = await clientRequest.Client.PostAsync(url, content);
-            return await response.Content.ReadAsStringAsync();
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            try
+            {
+                dynamic responseObject = JsonConvert.DeserializeObject(responseContent);
+                clientRequest.UserId = long.Parse(responseObject.customerProfile.id.ToString());
+                clientRequest.IsLoggedIn = true;
+            }
+            catch (Exception)
+            { }
+            return responseContent;
         }
 
         public async Task<MoneyRequestModel> CreateMoneyRequest(MoneyRequestCreateModel request)
@@ -152,7 +194,8 @@ namespace SkrillClientAPI.Services
             MoneyRequestModel moneyRequest = new MoneyRequestModel()
             {
                 id = result.id.ToString(),
-                key = result.key.ToString()
+                key = result.key.ToString(),
+                requestlink = result.link.href.ToString(),
             };
             return moneyRequest;
         }
@@ -192,6 +235,7 @@ namespace SkrillClientAPI.Services
             var url = $"https://account.skrill.com/api/logout/v2/logouts";
             var response = await clientRequest.Client.PostAsync(url, null);
             var responseContent = await response.Content.ReadAsStringAsync();
+            clientRequest.IsLoggedIn = false;
             return responseContent;
         }
     }
